@@ -1,3 +1,134 @@
 #!/usr/bin/env ruby
 
-require "mini_profiler"
+###############
+# generate a text report for
+# a rack-mini-profiler run
+###############
+
+require 'optparse'
+# want to use core_ext: try, camelize, constantize
+require 'active_support/all'
+require 'rack-mini-profiler'
+require 'mini_profiler/printer'
+require 'mini_profiler/rack_storage'
+
+class GenPerf
+  attr_accessor :cli_ids
+
+  def printer
+    @printer ||= ::MiniProfiler::Printer.new
+  end
+
+  def storage
+    @storage ||= ::MiniProfiler::RackStorage.new
+  end
+
+  def load(id)
+    storage.load(id)
+  end
+
+  ### CLI
+
+  class OptSetter
+    def initialize(opts, model, env)
+      @opts  = opts
+      @model = model
+      @env   = env # not thrilled, but will do for now
+    end
+
+    def opt(attr_name, *args, &block)
+      block ||= lambda { |v| @model.send("#{attr_name}=", v) } # default setter is name = value
+      # load ENV value
+      if args[0] =~ /^ENV\[[:"']?([^'"]*)['"]\]/ && (value = @env[$1])
+        args.shift
+        block.call(value)
+      end
+      if attr_name && attr_name !~ /^pass/ && @model.respond_to?(attr_name) && (value = @model.send(attr_name))
+        args.last << " [#{value}]" # append default value to description
+      end
+      @opts.on(*args, &block)
+    end
+  end
+
+  def opt(opts, model, env)
+    yield OptSetter.new(opts, model, env)
+  end
+
+  def parse(env, argv)
+    options = OptionParser.new do |opts|
+      opts.program_name = "gen_perf.rb"
+      opts.version = "0.0.1"
+      opts.banner = "Usage: gen_perf.rb [options] pageid [pageid ...]"
+      opt(opts, storage, env) do |o|
+        o.opt(:type, "ENV[PROFILER_TYPE]", "--storage STRING", "Storage type [e.g.: redis]")
+        o.opt(:storage_options, "ENV[PROFILER_STORAGE]", "--storage-options STRING",
+              "Storage options [e.g.: name=value,name=value]")
+      end
+      opt(opts, nil, nil) do |o|
+        o.opt(:all, "--all", "displays sql and children") { printer.display_sql = true ; printer.display_children = true}
+      end
+      opt(opts, printer, env) do |o|
+        o.opt(:display_offset,   "-o", "--offset",     "Display offset (default: false)")
+        o.opt(:display_sql,      "-s", "--sql",        "Display SQL")
+        o.opt(:dedup,            "-d", "--dedup",      "Dedup SQL")
+        o.opt(:aggressive_dedup,       "--aggro", "--aggressive", "Aggressive Dedup SQL")
+        o.opt(:shorten,                "--short", "--summary",    "Shorten SQL")
+        o.opt(:display_children, "-c", "--children",   "Display children")
+        o.opt(:display_trivial,  "-t", "--trivial",    "Display trivial") # ==> default to show?
+        o.opt(:skip_first,             "--skip",       "Skip first record for averages")
+        o.opt(:collapse,               "--collapse STING", "Collapse string")
+        o.opt(:verbose, "--verbose") do
+          printer.display_children = true
+          printer.display_sql = true
+        end# this sets my current defaults
+        o.opt(:quick, "-q", "--quick") do
+              # this sets a bunch of fields
+            printer.collapse = "Render"
+            printer.shorten = true
+            printer.display_children = true
+            # printer.dedup = true
+            # storage.type = "redis"
+            # storage.storage_options="db=2"
+            # http://localhost:3000/mini-profiler-resources/results?id=iblgq81g9ubfe6vkowl6
+        end# this sets my current defaults
+      end
+    end
+    begin
+      options.parse!(argv)
+    rescue
+      puts
+      puts options
+      puts
+      raise
+    end
+    self.cli_ids = argv
+    self
+  end
+
+  # print these out
+  def run(ids = cli_ids)
+    pages = Array.wrap(ids).map { |id| load(id) || raise("page #{id} not found") }
+    page_groups = pages.group_by { |page| page[:name] =~ /^(.*[^0-9])[0-9]+$/ ; $1 }.values
+    printer.print_group page_groups
+  end
+
+  def self.run(argv, env = [])
+    new.parse(ENV, ARGV).run
+  end
+end
+
+if false
+config = Rack::MiniProfiler.config
+storage = config.storage_instance
+page = storage.load("7lozn6a5oasswy5dvmpd")
+
+sand2("vm.count", 1) { Vm.count }
+load 'gen_perf.rb'
+GenPerf.run("-c", "-s", "[3a624ybh070ts1ostv48,", "enlsmszqannyn81u457q,", "26c0vvh8g8l9dzb00t17,", "cevlht2kowcbzwf02vkc]")
+GenPerf.run(page)
+end
+
+# for ruby gems, this will fail.
+if __FILE__ == $0 || $0 =~ /\/bin\//
+  GenPerf.run(ARGV, ENV)
+end

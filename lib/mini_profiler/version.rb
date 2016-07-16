@@ -1,3 +1,3 @@
-module MiniProfiler
+module PerfUtils
   VERSION = "0.1.0"
 end

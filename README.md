@@ -1,8 +1,10 @@
 # MiniProfiler
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/mini_profiler`. To experiment with that code, run `bin/console` for an interactive prompt.
+This is a command line version of rack-mini-profiler.
 
-TODO: Delete this and the text above, and describe your gem
+It allows you to add profiling to non-rack based applications.
+It also allows you to view the data collected with rack-mini-profiler
+from the command line.
 
 ## Installation
 
@@ -32,5 +34,5 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/mini_profiler.
+Bug reports and pull requests are welcome on GitHub at https://github.com/kbrock/mini_profiler.
 
