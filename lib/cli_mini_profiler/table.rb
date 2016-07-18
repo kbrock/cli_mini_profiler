@@ -1,4 +1,4 @@
-module MiniProfiler
+module CliMiniProfiler
   class Table
     # @return [Integer] number of characters wide for the timing fields
     attr_accessor :width

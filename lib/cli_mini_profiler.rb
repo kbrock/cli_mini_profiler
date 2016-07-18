@@ -1,20 +1,21 @@
-require "mini_profiler/version"
+require "cli_mini_profiler/version"
 
-require 'mini_profiler/stat'
-require 'mini_profiler/table'
-require 'mini_profiler/rack_storage'
-require 'mini_profiler/printer'
-require 'mini_profiler/profiler'
+require 'cli_mini_profiler/stat'
+require 'cli_mini_profiler/table'
+require 'cli_mini_profiler/rack_storage'
+require 'cli_mini_profiler/printer'
+require 'cli_mini_profiler/profiler'
 
+require 'active_support/all'
 require 'rack-mini-profiler'
 
-module MiniProfiler
+module CliMiniProfiler
   def self.config(*args, &block)
-    MiniProfiler::Profiler.config(*args, &block)
+    CliMiniProfiler::Profiler.config(*args, &block)
   end
 
   def self.capture(*args, &block)
-    MiniProfiler::Profiler.capture(*args, &block)
+    CliMiniProfiler::Profiler.capture(*args, &block)
   end
 
   # mark a method for capture

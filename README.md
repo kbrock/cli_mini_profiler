@@ -11,7 +11,7 @@ from the command line.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'mini_profiler'
+gem 'cli_mini_profiler'
 ```
 
 And then execute:
@@ -20,7 +20,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install mini_profiler
+    $ gem install cli_mini_profiler
 
 ## Usage
 
@@ -34,5 +34,5 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/kbrock/mini_profiler.
+Bug reports and pull requests are welcome on GitHub at https://github.com/kbrock/cli_mini_profiler.
 

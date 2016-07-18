@@ -1,4 +1,4 @@
-module MiniProfiler
+module CliMiniProfiler
   class RackStorage
     def initialize
       self.type = "redis"

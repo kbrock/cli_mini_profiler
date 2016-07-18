@@ -1,4 +1,4 @@
-module MiniProfiler
+module CliMiniProfiler
   # memsize_of_all uses up a bunch of memory and creates a bunch of objects and takes a lot of time
   COLLECT_MEMSIZE = true
   require 'objspace' if COLLECT_MEMSIZE

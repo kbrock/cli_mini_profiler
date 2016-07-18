@@ -2,7 +2,7 @@ require 'objspace'
 require 'singleton'
 require 'json'
 
-module MiniProfiler
+module CliMiniProfiler
   class Profiler
     include Singleton
 
@@ -71,7 +71,7 @@ module MiniProfiler
       page_struct = storage.current(env).page_struct
       #page_struct[:user] = config.user_provider.call(env) # needed?
       page_struct[:name] = name
-      d = MiniProfiler::Stat.new(name).calc
+      d = CliMiniProfiler::Stat.new(name).calc
       yield
       d.delta
       page_struct[:root].record_time(d.time * 1000)
@@ -105,7 +105,7 @@ module MiniProfiler
     # config
 
     def printer
-      @printer ||= ::MiniProfiler::Printer.new.tap do |printer|
+      @printer ||= ::CliMiniProfiler::Printer.new.tap do |printer|
         printer.display_children = false
         printer.display_sql = true
         printer.shorten = true
@@ -114,7 +114,7 @@ module MiniProfiler
     end
 
     def storage
-      @storage ||= ::MiniProfiler::RackStorage.new
+      @storage ||= ::CliMiniProfiler::RackStorage.new
     end
 
     def config(obj, params)

@@ -1,4 +1,4 @@
-module MiniProfiler
+module CliMiniProfiler
   class Printer
     attr_accessor :display_offset
     attr_accessor :display_sql

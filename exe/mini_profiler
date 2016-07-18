@@ -9,8 +9,8 @@ require 'optparse'
 # want to use core_ext: try, camelize, constantize
 require 'active_support/all'
 require 'rack-mini-profiler'
-require 'mini_profiler/printer'
-require 'mini_profiler/rack_storage'
+require 'cli_mini_profiler/printer'
+require 'cli_mini_profiler/rack_storage'
 
 class GenPerf
   attr_accessor :cli_ids
