@@ -1,10 +1,12 @@
 require "mini_profiler/version"
 
 require 'mini_profiler/stat'
-require 'mini_profiler/bookend'
+require 'mini_profiler/table'
 require 'mini_profiler/rack_storage'
 require 'mini_profiler/printer'
-require 'mini_profiler/profile'
+require 'mini_profiler/profiler'
+
+require 'rack-mini-profiler'
 
 module MiniProfiler
   def self.config(*args, &block)
