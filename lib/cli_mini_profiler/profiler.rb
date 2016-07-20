@@ -9,38 +9,48 @@ module CliMiniProfiler
     def initialize
     end
 
-    def self.capture(name = "no name", count = 1, &block)
+    def self.capture(name = "no name", count = 1, options = {}, &block)
+      name,  options = nil, name  if name.kind_of?(Hash)
+      count, options = nil, count if count.kind_of?(Hash)
+
+      name ||= options[:name] || "no name"
+      count ||= options[:count] || 1
+      gc_mode = options[:gc] && options[:gc] || false
+      gc_mode = gc_mode.to_sym if gc_mode.kind_of?(String)
+
       gp = instance
+
+      if gc_mode == :disable
+        GC.disable
+      elsif gc_mode != false
+        GC.start
+      end
+
       # [[gen_perf_num, stat]]
       xs = count.times.collect do |i|
         gp.capture("#{name}-#{i+1}", &block)
       end
       gp.print_xs(xs)
       xs.map(&:first) #process ids
+    ensure
+      GC.enable if gc_mode == :disable
     end
 
-    def self.capture_with_rollback(name = "", count = 4, &block)
-      gp = instance
-      old_skip = config(:skip_first)
-      config(:skip_first => true)
-      # [[gen_perf_num, stat]]
-      xs = count.times.collect do |i|
-        x_s = nil
-        begin
-          Vm.transaction do
-            x_s = gp.capture("#{name}-#{i+1}", &block)
-            raise "rolling back transaction"
-          end
-        rescue => e
-          puts "bailed with #{e.message}"
-        end
-        x_s
-      end
-      gp.print_xs(xs)
-      xs.map(&:first) #process ids
-    ensure
-      config(:skip_first => old_skip)
-    end
+      # rollback = !options[:rollback].nil? && options[:rollback] != false
+      # if rollback
+      #   xs = count.times.collect do |i|
+      #     x_s = nil
+      #     begin
+      #       Vm.transaction do
+      #         x_s = gp.capture("#{name}-#{i+1}", &block)
+      #         raise "rolling back transaction"
+      #       end
+      #     rescue => e
+      #       raise unless e.message == "rolling back transaction"
+      #     end
+      #     x_s
+      #   end
+      # else
 
     def self.config(name, options = nil)
       name, options = :printer, name if options.nil?
