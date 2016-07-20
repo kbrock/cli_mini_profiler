@@ -1,8 +1,8 @@
 module CliMiniProfiler
   class RackStorage
     def initialize
-      self.type = "redis"
-      self.storage_options="db=2"
+#      self.type = "redis"
+#      self.storage_options="db=2"
     end
 
     def load(id)
@@ -22,8 +22,8 @@ module CliMiniProfiler
 
     def type=(kind)
       kind = kind.camelize
-      config.storage = ::Rack::MiniProfiler.const_get(kind) rescue nil ||
-                       ::Rack::MiniProfiler.const_get(kind + "Store") rescue nil ||
+      config.storage = ::Rack::MiniProfiler.const_get(kind + "Store") rescue nil ||
+                       ::Rack::MiniProfiler.const_get(kind) rescue nil ||
                        raise("not able to find store Rack::MiniProfiler::#{kind} or #{kind}Store")
     end
 
