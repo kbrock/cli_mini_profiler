@@ -48,4 +48,3 @@ module CliMiniProfiler
     ::Rack::MiniProfiler.profile_singleton_method(klass, method) { |a| name || "#{klass.name}.#{method}" }
   end
 end
-
