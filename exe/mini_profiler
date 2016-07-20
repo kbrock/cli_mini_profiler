@@ -16,11 +16,11 @@ class GenPerf
   attr_accessor :cli_ids
 
   def printer
-    @printer ||= ::MiniProfiler::Printer.new
+    @printer ||= ::CliMiniProfiler::Printer.new
   end
 
   def storage
-    @storage ||= ::MiniProfiler::RackStorage.new
+    @storage ||= ::CliMiniProfiler::RackStorage.new
   end
 
   def load(id)
