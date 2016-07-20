@@ -36,7 +36,7 @@ module CliMiniProfiler
           true
         end
       end
-      puts "Can not bind: #{klass.name}.#{method}" unless assigned.any?
+      puts "Can not bind: #{klass1.name}.#{method}" unless assigned.any?
     end
   end
 
