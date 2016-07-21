@@ -1,13 +1,12 @@
-require "cli_mini_profiler/version"
+require 'rack-mini-profiler'
+require 'active_support/all'
 
+require "cli_mini_profiler/version"
 require 'cli_mini_profiler/stat'
 require 'cli_mini_profiler/table'
 require 'cli_mini_profiler/rack_storage'
 require 'cli_mini_profiler/printer'
 require 'cli_mini_profiler/profiler'
-
-require 'active_support/all'
-require 'rack-mini-profiler'
 
 module CliMiniProfiler
   def self.config(*args, &block)
