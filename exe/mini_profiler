@@ -77,6 +77,7 @@ class GenPerf
         o.opt(:display_trivial,  "-t", "--trivial",    "Display trivial") # ==> default to show?
         o.opt(:skip_first,             "--skip",       "Skip first record for averages")
         o.opt(:collapse,               "--collapse STING", "Collapse string")
+        o.opt(:display_trace,          "--trace",      "Display trace")
         o.opt(:verbose, "--verbose") do
           printer.display_children = true
           printer.display_sql = true
@@ -102,6 +103,7 @@ class GenPerf
       raise
     end
     self.cli_ids = argv
+
     self
   end
 
