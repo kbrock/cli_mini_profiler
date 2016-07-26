@@ -9,6 +9,7 @@ require 'optparse'
 # want to use core_ext: try, camelize, constantize
 require 'active_support/all'
 require 'rack-mini-profiler'
+require 'cli_mini_profiler/table'
 require 'cli_mini_profiler/printer'
 require 'cli_mini_profiler/rack_storage'
 

@@ -27,6 +27,14 @@ module CliMiniProfiler
                        raise("not able to find store Rack::MiniProfiler::#{kind} or #{kind}Store")
     end
 
+    def inspect
+      {
+        :type => config.storage.name,
+        :instance => config.storage_instance.class.name,
+        :options => storage_options
+      }.inspect
+    end
+
     def storage_options
       config.storage_options ? config.storage_options.map {|n, v| "#{n}=#{v}" }.join(",") : ""
     end
@@ -38,6 +46,7 @@ module CliMiniProfiler
       end
     end
 
+    # instance of storage class
     def instance
       config.storage_instance ||= config.storage.new(config.storage_options)# .tap { |x| puts "datastore: #{x.inspect}"}
     end

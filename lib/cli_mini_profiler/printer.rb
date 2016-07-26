@@ -1,12 +1,14 @@
+require "forwardable"
+
 module CliMiniProfiler
   class Printer
-    attr_accessor :display_offset
+    extend Forwardable
+    attr_reader :display_children
+
     attr_accessor :display_sql
     attr_accessor :display_trivial
     attr_accessor :display_trace
     attr_accessor :display_cache
-    attr_accessor :display_children
-    attr_accessor :display_stats
     attr_accessor :collapse
 
     attr_accessor :aggressive_dedup
@@ -15,27 +17,25 @@ module CliMiniProfiler
     # @return [Boolean] true to skip the first record for averages - often the first record is an outlier
     attr_accessor :skip_first
 
-    # @return [Integer] number of characters wide for the timing fields
-    attr_accessor :width
-
-    attr_reader   :fmt_h, :fmt_d
-
     def initialize
       @display_offset = false
       @display_sql = false
       @display_children = false
       @collapse = []
+      @table = CliMiniProfiler::Table.new
     end
 
-    def handle_width(phrases)
-      widths = Array.wrap(phrases).map do |phrase|
-        f_to_s(phrase).size
-      end + [width, 0]
-
-      @width = widths.compact.max
-      @fmt_h = fmt(':')
-      @fmt_d = fmt
+    def display_children=(val)
+      @display_children = val
+      @table.display_children = val
     end
+
+    def_delegators :@table, :display_offset, :display_offset=
+    def_delegators :@table, :display_stats, :display_stats=
+
+    # internal:
+    def_delegators :@table, :handle_width, :print_header, :print_line, :print_dashes
+    def_delegators :@table, :f_to_s
 
     def collapse=(val)
       @collapse = val.kind_of?(String) ? val.split(",") : val
@@ -44,16 +44,6 @@ module CliMiniProfiler
     def aggressive_dedup=(val)
       @display_sql = true if val == true
       @aggressive_dedup = val
-    end
-
-    def print_header
-      print_line(0, "@", "ms", "ms-", "queries", "query (ms)", "rows", "comments", "bytes", "objects")
-      # print_line(0, "@", "ms", "ms-", "# queries", "query time(ms)", "# rows", "comments")
-    end
-
-    def print_dashes
-      d = "---"
-      print_line(0, d, d, d, d, d, d, d, d, d)
     end
 
     def print_page(page, stat)
@@ -122,20 +112,6 @@ module CliMiniProfiler
       print_line(0, nil, duration, nil, query_count, query_times, query_rows, "avg")
     end
 
-    def f_to_s(f, tgt = 1)
-      if f.kind_of?(Numeric)
-        parts = f.round(tgt).to_s.split('.')
-        parts[0].gsub!(/(\d)(?=(\d\d\d)+(?!\d))/, "\\1,")
-        parts.join('.')
-      else
-        (f || "")
-      end
-    end
-
-    def z_to_s(f, tgt = 1)
-      f.kind_of?(Numeric) && f.round(tgt) == 0.0 ? nil : f_to_s(f, tgt)
-    end
-
     private
 
     def print_node(root)
@@ -146,7 +122,6 @@ module CliMiniProfiler
                    node[:duration_milliseconds], node[:duration_without_children_milliseconds],
                    query_count, node[:sql_timings_duration_milliseconds], query_rows,
                    node[:name].try(:strip)) unless node[:name] =~ %r{http://:}
-
         print_sqls(node[:sql_timings], node) if display_sql
       end
     end
@@ -313,55 +288,6 @@ module CliMiniProfiler
 
     def avg(nodes, &block)
       nodes.blank? ? 0 : (nodes.map(&block).sum / nodes.length)
-    end
-
-    # actual printing statements
-
-    def fmt(spacer = ' ')
-      durations = 1
-      durations +=1 if display_children
-      durations +=1 if display_offset
-      durations +=2 if display_stats
-
-      "| " + (" %*s#{spacer}|" * durations) + # offset, duration, child duration
-        "%5s#{spacer}| %*s#{spacer}| %8s#{spacer}|" + #sql count, sql duration, sql row count
-        "#{spacer == ' ' ? "`" : " "}%s%s#{spacer == ' ' ? "`" : ""}" #pading, comment
-    end
-
-    @@padding = Hash.new { |hash, key| hash[key] = "." * key.to_i }
-    def padded(count)
-      @@padding[count]
-    end
-
-    def print_heading(depth, phrase)
-      print_line(depth, nil, nil, nil, nil, nil, nil, phrase)
-    end
-
-    def print_line(depth, offset,
-                   duration, child_duration,
-                   sql_count, sql_duration, sql_row_count, 
-                   phrase,
-                   memsize_of_all = nil, total_allocated_objects = nil, disclaimer = false)
-      offset = f_to_s(offset)
-      duration = f_to_s(duration)
-      child_duration = f_to_s(child_duration)
-      sql_duration = z_to_s(sql_duration)
-      phrase = phrase.gsub("executing ","") if phrase
-      sql_count = z_to_s(sql_count, 0)
-      sql_row_count = z_to_s(sql_row_count, 0)
-      memsize_of_all = z_to_s(memsize_of_all, 0)
-      memsize_of_all += "*" if memsize_of_all && memsize_of_all != "" && disclaimer
-      total_allocated_objects = z_to_s(total_allocated_objects, 0)
-
-      data = []
-      data += [width, offset] if display_offset
-      data += [width, duration]
-      # data += [1, width, 1, width] if display_stats
-      data += [width, memsize_of_all, width, total_allocated_objects] if display_stats
-      data += [width, child_duration] if display_children
-      data += [sql_count, width, sql_duration, sql_row_count] + [padded(depth)]
-      data += [phrase]
-      puts (offset == "---" ? fmt_h : fmt_d) % data
     end
   end
 end
