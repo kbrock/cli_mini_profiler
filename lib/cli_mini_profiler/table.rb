@@ -25,9 +25,12 @@ module CliMiniProfiler
       @fmt_d = fmt
     end
 
-    def print_header
-      print_line(0, "@", "ms", "ms-", "queries", "query (ms)", "rows", "comments", "bytes", "objects")
-      # print_line(0, "@", "ms", "ms-", "# queries", "query time(ms)", "# rows", "comments")
+    def print_header(depth = 0, comment = "objects")
+      print_line(depth, "@", "ms", "ms-", "queries", "query (ms)", "rows", "comments", "bytes", comment)
+    end
+
+    def print_subheader(depth = 0, comment = "objects")
+      print_line(depth, "","","","","","", comment)
     end
 
     def print_dashes

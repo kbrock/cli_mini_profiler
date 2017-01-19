@@ -65,12 +65,10 @@ class GenPerf
         o.opt(:storage_options, "ENV[PROFILER_STORAGE]", "--storage-options STRING",
               "Storage options [e.g.: name=value,name=value]")
       end
-      opt(opts, nil, nil) do |o|
-        o.opt(:all, "--all", "displays sql and children") { printer.display_sql = true ; printer.display_children = true}
-      end
       opt(opts, printer, env) do |o|
         o.opt(:display_offset,   "-o", "--offset",     "Display offset (default: false)")
         o.opt(:display_sql,      "-s", "--sql",        "Display SQL")
+        o.opt(:sql_filter,             "--filter STRING", "Filter sql to display")
         o.opt(:dedup,            "-d", "--dedup",      "Dedup SQL")
         o.opt(:aggressive_dedup,       "--aggro", "--aggressive", "Aggressive Dedup SQL")
         o.opt(:shorten,                "--short", "--summary",    "Shorten SQL")
@@ -79,10 +77,10 @@ class GenPerf
         o.opt(:skip_first,             "--skip",       "Skip first record for averages")
         o.opt(:collapse,               "--collapse STING", "Collapse string")
         o.opt(:display_trace,          "--trace",      "Display trace")
-        o.opt(:verbose, "--verbose") do
-          printer.display_children = true
-          printer.display_sql = true
-        end# this sets my current defaults
+        # o.opt(:verbose, "--verbose") do
+        #   printer.display_children = true
+        #   printer.display_sql = true
+        # end# this sets my current defaults
         o.opt(:quick, "-q", "--quick") do
               # this sets a bunch of fields
             printer.collapse = "Render"
@@ -103,6 +101,7 @@ class GenPerf
       puts
       raise
     end
+    printer.fix_config # set dislay dependencies
     self.cli_ids = argv
 
     self
@@ -111,7 +110,7 @@ class GenPerf
   # print these out
   def run(ids = cli_ids)
     pages = Array.wrap(ids).map { |id| load(id) || raise("page #{id} not found") }
-    page_groups = pages.group_by { |page| page[:name] =~ /^(.*[^0-9])[0-9]+$/ ; $1 }.values
+    page_groups = pages.group_by { |page| page[:name] =~ /^(.*[^0-9#])[0-9]+(#.*)$/ ; $1 }.values
     printer.print_group page_groups
   end
 

@@ -8,8 +8,9 @@ module CliMiniProfiler
     def load(id)
       return id if id.respond_to?(:root)
       id = $1 if id =~ %r{http.*/(?:results\?id=|run-)([^.]*)(?:.html)?$}
-      id = id.to_s.tr("\"'[],",'')
-      instance.load(id)
+      id = id.tr("\"'[],",'')
+      id, name = id.split("#")
+      instance.load(id).tap { |r| r[:name] = "#{r[:name]}##{name}" if r && name }
     end
 
     def save(page_struct)

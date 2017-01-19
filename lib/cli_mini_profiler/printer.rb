@@ -3,9 +3,10 @@ require "forwardable"
 module CliMiniProfiler
   class Printer
     extend Forwardable
-    attr_reader :display_children
+    attr_accessor :display_children
 
     attr_accessor :display_sql
+    attr_accessor :sql_filter
     attr_accessor :display_trivial
     attr_accessor :display_trace
     attr_accessor :display_cache
@@ -23,27 +24,32 @@ module CliMiniProfiler
       @display_children = false
       @collapse = []
       @table = CliMiniProfiler::Table.new
+      #@sql_filter = /select *"vms"./i
     end
 
-    def display_children=(val)
-      @display_children = val
-      @table.display_children = val
+    def sql_filter=(val)
+      if val.nil? || val == "" || val == false
+        @sql_filter = nil
+      else
+        @sql_filter = /#{val}/i
+      end
+    end
+
+    def fix_config
+      @display_sql = true if @display_trace || @sql_filter || @aggressive_dedup || @shorten
+      @display_children = true if @display_sql
+      self
     end
 
     def_delegators :@table, :display_offset, :display_offset=
     def_delegators :@table, :display_stats, :display_stats=
 
     # internal:
-    def_delegators :@table, :handle_width, :print_header, :print_line, :print_dashes
+    def_delegators :@table, :handle_width, :print_header, :print_subheader, :print_line, :print_dashes
     def_delegators :@table, :f_to_s
 
     def collapse=(val)
       @collapse = val.kind_of?(String) ? val.split(",") : val
-    end
-
-    def aggressive_dedup=(val)
-      @display_sql = true if val == true
-      @aggressive_dedup = val
     end
 
     def print_page(page, stat)
@@ -117,6 +123,7 @@ module CliMiniProfiler
     def print_node(root)
       all_nodes(root, !display_trivial) do |node, _|
         query_count, query_rows = count_sql(node) #if !display_sql # unsure
+        query_count = "(#{query_count})" if display_sql && query_count > 0
 
         print_line(node[:depth], node[:start_milliseconds],
                    node[:duration_milliseconds], node[:duration_without_children_milliseconds],
@@ -142,6 +149,7 @@ module CliMiniProfiler
       end
 
       snodes = dedup_sql(snodes, aggressive_dedup) if dedup || aggressive_dedup
+      snodes = snodes.select { |snode| snode[:formatted_command_string] =~ sql_filter } if sql_filter
       snodes.each do |snode|
         print_sql(snode, node[:depth] + 1)
         print_trace(snode[:stack_trace_snippet], node[:depth]) if display_trace
@@ -156,16 +164,17 @@ module CliMiniProfiler
       cached = cached_result?(snode)
       row_count = snode[:row_count] # # rows returned
       summary  = shorten ? snode[:summary] : snode[:formatted_command_string] # shortened sql (custom)
-      count    = snode[:count] # # times this was run (custom)
+      # why is this sometimes 0?
+      count    = snode[:count] || 1 # # times this was run (custom)
 
       # print_line(depth, start_ms, cached ? nil : duration, nil, count, cached ? duration : duration_f , cached ? "(#{row_count})" : row_count, summary)
       print_line(depth, start_ms, duration_f ? duration : nil, nil, count, duration_f || duration, cached ? "(#{row_count})" : row_count, summary)
     end
 
     def print_trace(trace, depth)
-      print_heading(depth, "TRACE:")
+      print_subheader(depth, "TRACE:")
       trace.split("\n").each do |t|
-        print_heading(depth + 1, t)
+        print_subheader(depth + 1, t)
       end
     end
 
