@@ -27,11 +27,14 @@ module CliMiniProfiler
       #@sql_filter = /select *"vms"./i
     end
 
+    # would have prefered keeping this as a string or regex
+    # but the complexity of collapsing spaces got to a block
     def sql_filter=(val)
       if val.nil? || val == "" || val == false
         @sql_filter = nil
       else
-        @sql_filter = /#{val}/i
+        val = val.gsub(/ +/, ' ').gsub('"','')
+        @sql_filter = ->(x) { x.gsub(/ +/, ' ').gsub('"','') =~ /#{val}/i }
       end
     end
 
@@ -149,7 +152,7 @@ module CliMiniProfiler
       end
 
       snodes = dedup_sql(snodes, aggressive_dedup) if dedup || aggressive_dedup
-      snodes = snodes.select { |snode| snode[:formatted_command_string] =~ sql_filter } if sql_filter
+      snodes = snodes.select { |snode| sql_filter.call(snode[:formatted_command_string]) } if sql_filter
       snodes.each do |snode|
         print_sql(snode, node[:depth] + 1)
         print_trace(snode[:stack_trace_snippet], node[:depth]) if display_trace
@@ -172,6 +175,7 @@ module CliMiniProfiler
     end
 
     def print_trace(trace, depth)
+      return if trace.tr("\n ",'').size == 0
       print_subheader(depth, "TRACE:")
       trace.split("\n").each do |t|
         print_subheader(depth + 1, t)
