@@ -26,7 +26,7 @@ module CliMiniProfiler
     end
 
     def print_header(depth = 0, comment = "objects")
-      print_line(depth, "@", "ms", "ms-", "queries", "query (ms)", "rows", "comments", "bytes", comment)
+      print_line(depth, "@", "ms", "ms-", "query", "qry ms", "rows", "comments", "bytes", comment)
     end
 
     def print_subheader(depth = 0, comment = "objects")
