@@ -1,5 +1,13 @@
 require "cli_mini_profiler"
 
+# CliMiniProfiler.config(
+#   :display_offset => false,
+#   :display_children => true,
+#   :collapse => "Rendering",
+#   :display_sql => true, :shorten => true,
+
+#   :dedup => true, :aggressive_dedup => true, :display_trace => false
+# )
 def bookend(*args, &block)
   CliMiniProfiler.capture(*args, &block)
 end

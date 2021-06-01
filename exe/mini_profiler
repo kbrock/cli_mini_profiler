@@ -65,6 +65,9 @@ class GenPerf
         o.opt(:storage_options, "ENV[PROFILER_STORAGE]", "--storage-options STRING",
               "Storage options [e.g.: name=value,name=value]")
       end
+      # opt(opts, nil, nil) do |o|
+      #   o.opt(:all, "--all", "displays sql and children") { printer.display_sql = true }
+      # end
       opt(opts, printer, env) do |o|
         o.opt(:display_offset,   "-o", "--offset",     "Display offset (default: false)")
         o.opt(:display_sql,      "-s", "--sql",        "Display SQL")
@@ -112,6 +115,10 @@ class GenPerf
     pages = Array.wrap(ids).map { |id| load(id) || raise("page #{id} not found") }
     page_groups = pages.group_by { |page| page[:name] =~ /^(.*[^0-9#])[0-9]+(#.*)$/ ; $1 }.values
     printer.print_group page_groups
+  rescue RuntimeError => e
+    puts
+    puts "Sorry, #{e.message}"
+    puts
   end
 
   def self.run(argv, env = [])

@@ -20,22 +20,26 @@ module CliMiniProfiler
   # mark a method for capture
   # profile(klass, method_name)
   # profile([[klass, method_name], ...])
-  def self.profile(methods, name = nil)
-    methods = [[methods, name]] if name
-    methods.each do |klass1, method|
-      possible_klasses = [klass1, (klass1.const_get(:ClassMethods) rescue nil)]
-      assigned = possible_klasses.compact.map do |klass|
-        if klass.respond_to?(method)
-          #puts "binding #{"#{klass.name}.#{method}"}"
-          ::Rack::MiniProfiler.profile_singleton_method(klass, method) { |a| name || "#{klass.name}.#{method}" }
+  def self.profile(*methods)
+    methods.flat_map do |method_desc|
+      klass_name, mode, method_name = method_desc.split(/([.#])/)
+      klass = klass_name.safe_constantize
+
+      begin
+        if klass && mode == "."
+          ::Rack::MiniProfiler.profile_singleton_method(klass, method_name) { |a| method_desc }
           true
-        elsif klass.method_defined?(method)
-          #puts "binding #{"#{klass.name}##{method}"}"
-          ::Rack::MiniProfiler.profile_method(klass, method) { |a| name || "#{klass.name}##{method}" }
+        elsif klass
+          ::Rack::MiniProfiler.profile_method(klass, method_name) { |a| method_desc }
           true
+        else
+          puts "Can not find class: #{klass} (#{method_desc})"
+          false
         end
+      rescue
+        puts "Can not bind: #{method_desc}"
+        false
       end
-      puts "Can not bind: #{klass1.name}.#{method}" unless assigned.any?
     end
   end
 

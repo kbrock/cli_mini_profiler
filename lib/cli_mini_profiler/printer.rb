@@ -203,7 +203,7 @@ module CliMiniProfiler
     def summarize_sql_cmd(sql, params, include_count = true)
       return "SCHEMA #{$1}" if sql =~ /pg_attribute a.*'"?([^'"]*)"?'::regclass/
 
-      sql =~ /^ *(SELECT|UPDATE|DELETE|INSERT)/i #delete from insert into
+      sql =~ /^[\n\t ]*(SELECT|UPDATE|DELETE|INSERT)/i #delete from insert into
       operation = $1.try(:upcase)
 
       case operation
@@ -214,16 +214,23 @@ module CliMiniProfiler
         summary = sql.split("(").first[0..100]
       when "UPDATE", "INSERT"
         segment = sql.split(/WHERE/).first
+        # may want to cut off at "SET"
         summary = segment.gsub!(/= *('[^\']*'|\$?[0-9.]*)/) { x = $1 ; x = ".{#{x.length}}" if x.length > 20 ; "= #{x.split("\n").first}"} || segment
+        summary = summary[0..100]
       else # "DELETE|BEGIN|COMMIT|ROLLBACK
         summary = sql
       end
-        #byebug
       if params && !shorten
         summary += " "
         summary += fix_params(params).map(&:second).inspect.to_s[0..20]
       end
-      summary += " -- [#{size_sql(sql, params)}]" if include_count
+      if include_count
+        count = size_sql(sql, params)
+        summary += " -- [#{count}]" if count > 10
+      end
+      summary.gsub!(/^[\n\t ]*([A-Z]+)[\n\t ]+/) { "#{$1} " }# remove opening whitespace
+      # not sure if removing newlines in values (e.g. yaml) is good
+      summary.gsub!(/[\n\t ]+/,' ')
       summary 
     end
 
