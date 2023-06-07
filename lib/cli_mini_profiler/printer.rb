@@ -33,8 +33,8 @@ module CliMiniProfiler
       if val.nil? || val == "" || val == false
         @sql_filter = nil
       else
-        val = val.gsub(/ +/, ' ').gsub('"','')
-        @sql_filter = ->(x) { x.gsub(/ +/, ' ').gsub('"','') =~ /#{val}/i }
+        val = /#{clean_sql(val, prune_quotes: true)}/i
+        @sql_filter = ->(x) { clean_sql(x, prune_quotes: true) =~ val }
       end
     end
 
@@ -146,6 +146,7 @@ module CliMiniProfiler
       # remove cached nodes
       snodes = snodes.select { |snode| !cached_result?(snode) } unless display_cache
       snodes.each do |snode|
+        snode[:formatted_command_string] = clean_sql(snode[:formatted_command_string], prune_quotes: true)
         snode[:summary] = summarize_sql_cmd(snode[:formatted_command_string], snode[:parameters], !aggressive_dedup)
         # unsure:
         snode[:formatted_command_string] += " " + fix_params(snode[:parameters]).map(&:second).inspect if snode[:parameters]
@@ -174,10 +175,18 @@ module CliMiniProfiler
       print_line(depth, start_ms, duration_f ? duration : nil, nil, count, duration_f || duration, cached ? "(#{row_count})" : row_count, summary)
     end
 
+    def clean_sql(sql, prune_quotes: false)
+      sql = sql.gsub(/ +/, ' ').gsub("&quot;", "\"").gsub("&#39;", "'").gsub("&lt;", '<').gsub("&gt;", '<')
+      sql = sql.tr("\"", '') if prune_quotes
+      sql
+    end
+
     def print_trace(trace, depth)
       return if trace.tr("\n ",'').size == 0
       print_subheader(depth, "TRACE:")
       trace.split("\n").each do |t|
+        # put in spacing so url linking works
+        t = t.gsub("`", "'").gsub(":in '", " in '")
         print_subheader(depth + 1, t)
       end
     end

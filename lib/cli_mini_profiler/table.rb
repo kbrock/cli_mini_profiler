@@ -64,7 +64,7 @@ module CliMiniProfiler
         "#{spacer == ' ' ? "`" : " "}%s%s#{spacer == ' ' ? "`" : ""}" #pading, comment
     end
 
-    @@padding = Hash.new { |hash, key| hash[key] = "." * key.to_i }
+    @@padding = Hash.new { |hash, key| hash[key] = "." * key.to_i + " " }
     def padded(count)
       @@padding[count]
     end
@@ -82,7 +82,7 @@ module CliMiniProfiler
       duration = f_to_s(duration)
       child_duration = f_to_s(child_duration)
       sql_duration = z_to_s(sql_duration)
-      phrase = phrase.gsub("executing ","") if phrase
+      phrase = phrase&.gsub(/Executing[a-z ]*:/, "")
       sql_count = z_to_s(sql_count, 0)
       sql_row_count = z_to_s(sql_row_count, 0)
       memsize_of_all = z_to_s(memsize_of_all, 0)
