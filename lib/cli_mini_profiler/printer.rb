@@ -27,7 +27,7 @@ module CliMiniProfiler
       #@sql_filter = /select *"vms"./i
     end
 
-    # would have prefered keeping this as a string or regex
+    # would have preferred keeping this as a string or regex
     # but the complexity of collapsing spaces got to a block
     def sql_filter=(val)
       if val.nil? || val == "" || val == false
@@ -59,7 +59,7 @@ module CliMiniProfiler
       query_count, row_count = child_sql_counts(page.root)
 
       print_line(0, 0.0, page.duration_ms, 0, query_count, page.duration_ms_in_sql, row_count, page[:name],
-        stat && stat.memsize_of_all, stat && stat.total_objects, stat && stat.freed_objects?)
+        stat&.memsize_of_all, stat&.total_objects, stat&.freed_objects?)
       collapse_nodes(page.root[:children], collapse) unless collapse.empty?
       print_node(page.root) if display_children
     end
@@ -240,7 +240,7 @@ module CliMiniProfiler
       summary.gsub!(/^[\n\t ]*([A-Z]+)[\n\t ]+/) { "#{$1} " }# remove opening whitespace
       # not sure if removing newlines in values (e.g. yaml) is good
       summary.gsub!(/[\n\t ]+/,' ')
-      summary 
+      summary
     end
 
     def size_sql(sql, params)

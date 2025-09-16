@@ -17,6 +17,11 @@ module CliMiniProfiler
     CliMiniProfiler::Profiler.capture(*args, &block)
   end
 
+  def self.print(*ids)
+    ids.flatten!
+    CliMiniProfiler::Profiler.print(*ids)
+  end
+
   # mark a method for capture
   # profile(klass, method_name)
   # profile([[klass, method_name], ...])
@@ -37,7 +42,8 @@ module CliMiniProfiler
           false
         end
       rescue
-        puts "Can not bind: #{method_desc}"
+        # This is good. but as we tend to use the same block for multiple versions, this can be noise
+        # puts "Can not bind: #{method_desc}"
         false
       end
     end

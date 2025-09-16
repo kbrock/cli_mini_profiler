@@ -6,7 +6,7 @@
 ###############
 
 require 'optparse'
-# want to use core_ext: try, camelize, constantize
+# want to use core_ext: camelize, safe_constantize
 require 'active_support/all'
 require 'rack-mini-profiler'
 require 'cli_mini_profiler/table'
@@ -39,11 +39,12 @@ class GenPerf
 
     def opt(attr_name, *args, &block)
       block ||= lambda { |v| @model.send("#{attr_name}=", v) } # default setter is name = value
-      # load ENV value
+      # populate with ENV vars
       if args[0] =~ /^ENV\[[:"']?([^'"]*)['"]\]/ && (value = @env[$1])
         args.shift
         block.call(value)
       end
+      # show the default value
       if attr_name && attr_name !~ /^pass/ && @model.respond_to?(attr_name) && (value = @model.send(attr_name))
         args.last << " [#{value}]" # append default value to description
       end
@@ -66,7 +67,7 @@ class GenPerf
               "Storage options [e.g.: name=value,name=value]")
       end
       # opt(opts, nil, nil) do |o|
-      #   o.opt(:all, "--all", "displays sql and children") { printer.display_sql = true }
+      #   o.opt(:all, "--all", "displays sql and children") { printer.display_sql = true; printer.display_children = true }
       # end
       opt(opts, printer, env) do |o|
         o.opt(:display_offset,   "-o", "--offset",     "Display offset (default: false)")
@@ -104,7 +105,8 @@ class GenPerf
       puts
       raise
     end
-    printer.fix_config # set dislay dependencies
+    printer.fix_config # set display dependencies
+    # remaining arguments are the ids to profile
     self.cli_ids = argv
 
     self
